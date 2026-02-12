@@ -1,73 +1,96 @@
 ---
 name: ask-user-question
-description: Conduct deep, structured interviews to elicit missing requirements, constraints, risks, and tradeoffs from a user. Use when requirements are ambiguous or incomplete, when a plan/spec/design needs non-obvious follow-up questions, or when Codex must keep asking focused questions until decision-quality answers are collected.
+description: Run a structured requirements interview to gather missing decisions, constraints, risks, and tradeoffs one question at a time using an ask-user tool pattern. Use when the user asks to be interviewed, when requirements/specs/plans are ambiguous, or when Codex needs guided, option-based questioning before planning or implementation.
 ---
 
 # Ask User Question
 
 ## Overview
 
-Run iterative, high-signal interviews that surface hidden decisions and risks, not just obvious clarifications.
+Run a discovery-driven interview that asks high-value, non-obvious questions and waits for answers before moving forward.
 
-## Interview Protocol
+## Interview Workflow
 
-1. Identify the current artifact and objective.
-2. Build a gap list from missing or weak decisions.
-3. Ask a focused batch of 3-5 questions.
-4. Synthesize answers into decisions, assumptions, and open risks.
-5. Repeat until completion criteria are met.
+1. Explore before asking.
+- Inspect the artifact and surrounding context first (codebase, spec, constraints, prior decisions).
+- Derive likely decision points from real context; do not ask blind questions.
+2. Identify critical decisions.
+- Prioritize choices that impact architecture, scope, compliance, or rework risk.
+- Delay low-impact implementation details until direction is clear.
+3. Design structured questions.
+- Ask one question at a time by default.
+- Provide 2-4 mutually exclusive options with tradeoffs.
+- Put the recommended option first and label it `(Recommended)`.
+4. Ask and wait.
+- Use the ask-user tool when available.
+- Do not continue implementation/planning until the user answers, defers, or declines.
+5. Iterate until complete.
+- Convert each answer into explicit decisions/assumptions.
+- Ask the next highest-risk question until completion criteria pass.
 
-## Question Quality Rules
+## Question Design Rules
 
-- Ask non-obvious questions first; avoid asking for information already provided.
-- Prefer scenario-based prompts that force concrete decisions.
-- Ask about irreversible decisions early (data model, API shape, architecture, migration strategy).
-- Challenge soft language with precision prompts (for example: "fast", "simple", "later", "maybe").
-- Ask one question per decision; avoid compound questions.
+- Keep headers short (12 characters or fewer).
+- Ground every question in discovered context and unresolved risk.
+- Make options concrete and decision-ready, not vague.
+- Include one sentence per option explaining impact/tradeoff.
+- Prefer single-question turns; batch only when latency matters and questions are independent.
+- Challenge ambiguous terms with measurable prompts (for example: p95 latency, max steps, error budget).
+
+## Ask-User Tool Contract
+
+When a dedicated question tool is available, use this shape:
+
+- `question`: direct question with minimal context
+- `header`: short tag (max 12 chars)
+- `options`: 2-4 exclusive choices
+- Each option has:
+- `label`: short choice name
+- `description`: one-sentence impact/tradeoff
+- `multiSelect`: `false` unless multiple answers can legitimately apply
+
+If the tool is unavailable, present the same structure in markdown and ask the user to reply with one option label or `Other` plus details.
 
 ## Coverage Areas
 
-Ensure each area is addressed with at least one concrete answer or explicit deferment:
+Ensure each area is either decided or explicitly deferred with reason:
 
-- Product intent and success metrics
-- Users, personas, and critical user journeys
-- Scope boundaries, exclusions, and phased delivery
-- Technical architecture and dependency choices
-- Data model, data retention, privacy, and security controls
-- Error handling, resilience, observability, and rollback
-- Performance, scale assumptions, and capacity limits
-- UX states, accessibility, localization, and edge cases
-- Testing strategy and release verification
-- Operational ownership, support model, and maintenance costs
+- Product intent and measurable success
+- Primary users and critical journeys
+- Scope boundaries and phased delivery
+- Architecture and dependency strategy
+- Data model, privacy, security, and compliance
+- Reliability, failure behavior, and rollback
+- Performance, scale assumptions, and limits
+- UX states, accessibility, and edge-case behavior
+- Testing strategy and acceptance criteria
+- Ownership, operations, and maintenance model
 - Tradeoffs, rejected alternatives, and rationale
 
-## Interview Loop
+## Interview State Tracking
 
-For each round:
+After each answer, maintain:
 
-1. Select the top unresolved high-risk areas.
-2. Ask 3-5 questions targeting only those areas.
-3. Include at least one "failure-mode" question and one "tradeoff" question.
-4. After responses, produce:
-- Decided
-- Assumed
-- Still open
-- Next questions
+- `Decided`: decisions the user committed to
+- `Assumed`: temporary assumptions pending confirmation
+- `Open`: unresolved questions ordered by risk
+- `Next`: next question candidate with reason
 
 ## Completion Criteria
 
 Stop interviewing only when all are true:
 
-- No high-risk open questions remain.
-- Every coverage area is decided or explicitly deferred with reason.
+- No high-risk open decisions remain.
+- All coverage areas are decided or deferred with rationale.
 - Remaining unknowns are low risk and time-bounded.
-- The artifact is implementable without guessing core behavior.
+- A builder can proceed without guessing core behavior.
 
 ## Output Contract
 
-When used by another skill or workflow, return:
+Return:
 
 - Interview summary
 - Decisions captured
+- Assumptions still active
 - Open questions (if any)
-- Recommended next question batch (if not complete)
+- Recommended next question (if not complete)
