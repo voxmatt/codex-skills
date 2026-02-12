@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ask User Question"
+  short_description: "Run deep user interviews for missing requirements"
+  default_prompt: "Use $ask-user-question to run a focused requirements interview and return decisions plus open questions."
